@@ -211,6 +211,8 @@ function downloadCertificate() {
     doc.addFont("Allura-Regular.ttf", "Allura", "normal");
 
     const img = new Image();
+    img.crossOrigin = "Anonymous"; // <-- ADD THIS LINE BEFORE img.src
+
     img.onload = () => {
         doc.addImage(img, 'PNG', 0, 0, doc.internal.pageSize.width, doc.internal.pageSize.height);
 
@@ -230,32 +232,20 @@ function downloadCertificate() {
         const percentage = ((score / totalQuestions) * 100).toFixed(2);
         doc.text(`Score: ${percentage}%`, centerX, 135, { align: "center" });
 
-        // Generate the PDF as a Blob URL
-        const pdfBlob = doc.output('blob');
-        const blobURL = URL.createObjectURL(pdfBlob);
-
-        // Detect if the device is iOS
         const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
         if (isIOS) {
-            // Redirect to Blob URL for iOS devices
-            window.location.href = blobURL;
+            const pdfBlob = doc.output('blob');
+            window.location.href = URL.createObjectURL(pdfBlob);
         } else {
-            // For non-iOS devices, trigger download
-            const link = document.createElement('a');
-            link.href = blobURL;
-            link.download = 'Twelve-Certificate.pdf';
-            link.rel = 'noopener';
-            link.style.display = 'none';
-
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(blobURL); // Free up memory
+            doc.save('Twelve-Certificate.pdf');
         }
     };
 
-    img.src = 'https://twelvesites.github.io/ipc/images/certificate_template.png'; // Path to your certificate template image
+    img.onerror = () => {
+        console.error("Image failed to load. Check the URL or path.");
+    };
+
+    img.src = '../images/certificate.png'; // Ensure this path is correct
 }
 
 
